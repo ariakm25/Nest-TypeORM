@@ -11,7 +11,9 @@ import { User } from 'src/modules/user/entities/user.entity';
 import { Role } from 'src/modules/role/entities/role.entity';
 import { UserInterface } from 'src/modules/user/interfaces/user.interface';
 
-export class CreateUserDto implements UserInterface {
+export class CreateUserDto
+  implements Omit<UserInterface, 'createdAt' | 'updatedAt'>
+{
   @IsNotEmpty()
   name: User['name'];
 

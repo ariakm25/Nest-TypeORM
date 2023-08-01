@@ -9,7 +9,7 @@ export interface UserInterface {
   avatar?: string;
   roleId?: number;
   role?: RoleInterface;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
   tokens?: Token[];
 }
