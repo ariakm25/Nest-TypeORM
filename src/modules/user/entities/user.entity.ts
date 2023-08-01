@@ -4,19 +4,22 @@ import {
   Column,
   CreateDateColumn,
   Entity,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
 import { Factory } from 'nestjs-seeder';
-import { Role } from '../enums/role.enum';
 import { Token } from 'src/modules/token/entities/token.entity';
 import { Exclude } from 'class-transformer';
 import { hashSync } from 'bcryptjs';
 import { ApiHideProperty } from '@nestjs/swagger';
+import { Role } from 'src/modules/role/entities/role.entity';
+import { UserInterface } from 'src/modules/user/interfaces/user.interface';
+import { RoleInterface } from 'src/modules/role/interfaces/role.interface';
 
 @Entity()
-export class User {
+export class User implements UserInterface {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
@@ -31,14 +34,20 @@ export class User {
   @Factory('$2a$10$gKLiOrts6gyxa92zITbkBObiGQ8.xYrlD/EZwE6wzdHNgN61BOK8u') // password
   @Column({ length: 255 })
   @Exclude()
+  @ApiHideProperty()
   password: string;
 
   @Factory((faker) => faker.image.avatar())
-  @Column({ length: 255 })
-  avatar: string;
+  @Column({ length: 255, nullable: true, default: null })
+  avatar?: string;
 
-  @Column({ type: 'enum', enum: [Role.USER, Role.ADMIN], default: Role.USER })
-  role: string;
+  @Column({ nullable: true, default: null })
+  roleId?: number;
+
+  @ManyToOne(() => Role, {
+    onDelete: 'SET NULL',
+  })
+  role: RoleInterface;
 
   @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date;
@@ -46,7 +55,9 @@ export class User {
   @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date;
 
-  @OneToMany(() => Token, (token) => token.user)
+  @OneToMany(() => Token, (token) => token.user, {
+    onDelete: 'CASCADE',
+  })
   @ApiHideProperty()
   tokens?: Token[];
 

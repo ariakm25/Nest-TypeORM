@@ -17,6 +17,7 @@ import bullboardConfig from 'config/bullboard.config';
 import { UserModule } from './modules/user/user.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { DatabaseModule } from 'src/modules/database/database.module';
+import { RoleModule } from 'src/modules/role/role.module';
 
 @Module({
   imports: [
@@ -78,6 +79,7 @@ import { DatabaseModule } from 'src/modules/database/database.module';
       ttl: 60,
       limit: 120,
     }),
+    RoleModule,
     UserModule,
     AuthModule,
   ],

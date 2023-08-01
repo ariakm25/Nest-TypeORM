@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { TokenService } from './token.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
 import { Token } from './entities/token.entity';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { TokenService } from 'src/modules/token/services/token.service';
 
 @Module({
   imports: [

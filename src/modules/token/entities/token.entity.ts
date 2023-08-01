@@ -8,9 +8,10 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
 } from 'typeorm';
+import { TokenInterface } from 'src/modules/token/interfaces/token.interface';
 
 @Entity()
-export class Token {
+export class Token implements TokenInterface {
   @PrimaryGeneratedColumn('increment')
   id: number;
 
@@ -25,7 +26,7 @@ export class Token {
       TokenType.ResetPassword,
     ],
   })
-  type: string;
+  type: TokenType;
 
   @Column({ type: 'timestamp', nullable: true })
   expires: Date;
@@ -34,7 +35,6 @@ export class Token {
   createdAt: Date;
 
   @ManyToOne(() => User, (user) => user.id, {
-    cascade: true,
     onDelete: 'CASCADE',
   })
   @JoinColumn()

@@ -5,13 +5,15 @@ import {
   MinLength,
   Validate,
 } from 'class-validator';
-import { Role } from '../enums/role.enum';
 import { User } from 'src/modules/user/entities/user.entity';
 import { UniqueValidator } from 'src/common/decorators/validator/unique-validator.decorator';
 import { ExistValidator } from 'src/common/decorators/validator/exist-validator.decorator';
+import { Role } from 'src/modules/role/entities/role.entity';
+import { UserInterface } from 'src/modules/user/interfaces/user.interface';
 
-export class UpdateUserDto {
+export class UpdateUserDto implements Partial<UserInterface> {
   @IsDefined()
+  @Validate(ExistValidator, [User, 'id'])
   id: number;
 
   @IsOptional()
@@ -29,6 +31,6 @@ export class UpdateUserDto {
   avatar?: User['avatar'];
 
   @IsOptional()
-  @Validate(ExistValidator, [User, 'role'])
-  role?: Role;
+  @Validate(ExistValidator, [Role, 'id'])
+  roleId?: User['roleId'];
 }

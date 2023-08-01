@@ -1,9 +1,13 @@
 import { seeder } from 'nestjs-seeder';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import databaseConfig from '../../../config/database.config';
-import { UsersSeeder } from './user.seeder';
 import { User } from 'src/modules/user/entities/user.entity';
+import { RoleSeeder } from 'src/database/seeders/role.seeder';
+import { PermissionSeeder } from 'src/database/seeders/permission.seeder';
+import { Permission } from 'src/modules/role/entities/permission.entity';
+import { Role } from 'src/modules/role/entities/role.entity';
+import databaseConfig from '../../../config/database.config';
+import { UsersSeeder } from 'src/database/seeders/user.seeder';
 
 seeder({
   imports: [
@@ -32,6 +36,6 @@ seeder({
         };
       },
     }),
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([Role, Permission, User]),
   ],
-}).run([UsersSeeder]);
+}).run([RoleSeeder, PermissionSeeder, UsersSeeder]);

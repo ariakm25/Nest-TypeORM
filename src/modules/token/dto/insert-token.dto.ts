@@ -1,10 +1,10 @@
 import { IsNotEmpty, IsOptional } from 'class-validator';
 import { TokenType } from 'src/common/enums/token-type.enum';
-import { User } from 'src/modules/user/entities/user.entity';
+import { UserInterface } from 'src/modules/user/interfaces/user.interface';
 
 export class InsertTokenDto {
   @IsNotEmpty()
-  user: User;
+  user: UserInterface;
 
   @IsNotEmpty()
   token: string;

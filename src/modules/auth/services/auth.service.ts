@@ -4,15 +4,20 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { compareSync } from 'bcryptjs';
-import { LoginDto } from './dto/login.dto';
-import { User } from '../user/entities/user.entity';
-import { TokenService } from '../token/token.service';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
 import { TokenType } from 'src/common/enums/token-type.enum';
-import { MailService } from '../mail/mail.service';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { UpdatePasswordDto } from './dto/update-password.dto';
-import { UserService } from '../user/services/user.service';
+import {
+  CheckTokenResetPasswordDto,
+  ResetPasswordDto,
+} from '../dto/reset-password.dto';
+import { UpdatePasswordDto } from '../dto/update-password.dto';
+import { UserService } from '../../user/services/user.service';
+import { TokenService } from 'src/modules/token/services/token.service';
+import { MailService } from 'src/modules/mail/mail.service';
+import { LoginDto } from 'src/modules/auth/dto/login.dto';
+import { User } from 'src/modules/user/entities/user.entity';
+import { UserInterface } from 'src/modules/user/interfaces/user.interface';
+import { AuthResponse } from 'src/modules/auth/interfaces/auth.interface';
+import { RefreshTokenDto } from 'src/modules/auth/dto/refresh-token.dto';
 
 @Injectable()
 export class AuthService {
@@ -22,9 +27,12 @@ export class AuthService {
     private readonly mailService: MailService,
   ) {}
 
-  async login(loginDto: LoginDto): Promise<any> {
+  async login(loginDto: LoginDto): Promise<AuthResponse> {
     const { email, password } = loginDto;
-    const user: User = await this.usersService.findOneBy('email', email);
+    const user: UserInterface = await this.usersService.findOneBy(
+      'email',
+      email,
+    );
 
     if (user) {
       const isValid = compareSync(password, user.password);
@@ -35,16 +43,16 @@ export class AuthService {
           name: user.name,
           email: user.email,
           avatar: user.avatar,
-          role: user.role,
-          access_token: this.tokenService.createAccessToken(user),
-          refresh_token: await this.tokenService.createRefreshToken(user),
+          accessToken: this.tokenService.createAccessToken(user),
+          refreshToken: await this.tokenService.createRefreshToken(user),
         };
       }
     }
+
     throw new BadRequestException(['email or password is incorrect']);
   }
 
-  async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<any> {
+  async refreshToken(refreshTokenDto: RefreshTokenDto): Promise<AuthResponse> {
     const { refresh_token } = refreshTokenDto;
 
     const verify = await this.tokenService.validateRefreshToken(refresh_token);
@@ -66,9 +74,8 @@ export class AuthService {
         name: user.name,
         email: user.email,
         avatar: user.avatar,
-        role: user.role,
-        access_token: this.tokenService.createAccessToken(user),
-        refresh_token: await this.tokenService.createRefreshToken(user),
+        accessToken: this.tokenService.createAccessToken(user),
+        refreshToken: await this.tokenService.createRefreshToken(user),
       };
     }
 
@@ -83,7 +90,7 @@ export class AuthService {
       resetPasswordDto.email,
     );
     if (!user) {
-      return false;
+      throw new BadRequestException(['user with this email does not exist']);
     }
 
     const checkToken = await this.tokenService.isTokenRecentlyAdded(
@@ -130,12 +137,29 @@ export class AuthService {
     return true;
   }
 
+  async checkResetPasswordToken(
+    checkTokenResetPasswordDto: CheckTokenResetPasswordDto,
+  ): Promise<boolean> {
+    const { token } = checkTokenResetPasswordDto;
+    const checkToken = await this.tokenService.getToken(
+      token,
+      TokenType.ResetPassword,
+      true,
+    );
+
+    if (!checkToken) {
+      throw new BadRequestException(['invalid token']);
+    }
+
+    return true;
+  }
+
   async logout(id: number): Promise<boolean> {
     await this.tokenService.deleteAllUserTokens(id, TokenType.RefreshToken);
     return true;
   }
 
   async me(id: number): Promise<User> {
-    return await this.usersService.findOne(id);
+    return await this.usersService.findOneWithRolePermission(id);
   }
 }

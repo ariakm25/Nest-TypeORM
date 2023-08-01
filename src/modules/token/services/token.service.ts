@@ -1,13 +1,16 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService, JwtSignOptions } from '@nestjs/jwt';
-import { User } from '../user/entities/user.entity';
-import { Token } from './entities/token.entity';
-import { InsertTokenDto } from './dto/insert-token.dto';
+
 import { TokenType } from 'src/common/enums/token-type.enum';
 import { randomBytes } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { MoreThan, Repository } from 'typeorm';
+import { DeleteResult, MoreThan, Repository } from 'typeorm';
+import { Token } from 'src/modules/token/entities/token.entity';
+import { User } from 'src/modules/user/entities/user.entity';
+import { InsertTokenDto } from 'src/modules/token/dto/insert-token.dto';
+import { UserInterface } from 'src/modules/user/interfaces/user.interface';
+import { TokenInterface } from 'src/modules/token/interfaces/token.interface';
 
 @Injectable()
 export class TokenService {
@@ -18,19 +21,18 @@ export class TokenService {
     private readonly tokenRepository: Repository<Token>,
   ) {}
 
-  createAccessToken(user: User): string {
+  createAccessToken(user: UserInterface): string {
     const payload = {
-      sub: user.id,
+      id: user.id,
       name: user.name,
-      role: user.role,
       avatar: user.avatar,
     };
     return this.jwtService.sign(payload);
   }
 
-  async createRefreshToken(user: User): Promise<string> {
+  async createRefreshToken(user: UserInterface): Promise<string> {
     const payload = {
-      sub: user.id,
+      id: user.id,
     };
 
     const generateRefreshToken = this.jwtService.sign(
@@ -65,13 +67,6 @@ export class TokenService {
     return verify.sub;
   }
 
-  private getRefreshTokenOptions(): JwtSignOptions {
-    return {
-      secret: this.configService.get<string>('token.refreshTokenSecret'),
-      expiresIn: this.configService.get<string>('token.refreshTokenExpiration'),
-    };
-  }
-
   async createRandomTokenForUser(user: User, type: TokenType): Promise<string> {
     const token = randomBytes(30).toString('hex');
 
@@ -82,38 +77,6 @@ export class TokenService {
     });
 
     return token;
-  }
-
-  private async insertToken(insertTokenDto: InsertTokenDto): Promise<Token> {
-    let expires: Date = new Date();
-    switch (insertTokenDto.type) {
-      case TokenType.ResetPassword:
-        expires.setHours(
-          expires.getHours() +
-            parseInt(
-              this.configService.get<string>(
-                'token.resetPasswordTokenExpiration',
-              ),
-            ),
-        );
-        break;
-      case TokenType.ConfirmEmail:
-        expires.setHours(
-          expires.getHours() +
-            parseInt(
-              this.configService.get<string>(
-                'token.confirmEmailTokenExpiration',
-              ),
-            ),
-        );
-        break;
-      default:
-        expires = null;
-        break;
-    }
-
-    const payload: InsertTokenDto = { ...insertTokenDto, expires };
-    return this.tokenRepository.save(payload);
   }
 
   async getToken(
@@ -155,15 +118,59 @@ export class TokenService {
     return !!check;
   }
 
-  async deleteToken(token: string, type: TokenType): Promise<any> {
+  async deleteToken(token: string, type: TokenType): Promise<DeleteResult> {
     return await this.tokenRepository.delete({ token, type });
   }
 
-  async deleteAllUserTokens(userId: number, type?: TokenType): Promise<any> {
+  async deleteAllUserTokens(
+    userId: number,
+    type?: TokenType,
+  ): Promise<DeleteResult> {
     let query: any = { user: userId };
     if (type) {
       query = { ...query, type };
     }
     return await this.tokenRepository.delete(query);
+  }
+
+  private getRefreshTokenOptions(): JwtSignOptions {
+    return {
+      secret: this.configService.get<string>('token.refreshTokenSecret'),
+      expiresIn: this.configService.get<string>('token.refreshTokenExpiration'),
+    };
+  }
+
+  private async insertToken(
+    insertTokenDto: InsertTokenDto,
+  ): Promise<TokenInterface> {
+    let expires: Date = new Date();
+    switch (insertTokenDto.type) {
+      case TokenType.ResetPassword:
+        expires.setHours(
+          expires.getHours() +
+            parseInt(
+              this.configService.get<string>(
+                'token.resetPasswordTokenExpiration',
+              ),
+            ),
+        );
+        break;
+      case TokenType.ConfirmEmail:
+        expires.setHours(
+          expires.getHours() +
+            parseInt(
+              this.configService.get<string>(
+                'token.confirmEmailTokenExpiration',
+              ),
+            ),
+        );
+        break;
+      default:
+        expires = null;
+        break;
+    }
+
+    const payload: InsertTokenDto = { ...insertTokenDto, expires };
+    return this.tokenRepository.save(payload);
   }
 }

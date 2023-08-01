@@ -1,20 +1,24 @@
 import {
-  Controller,
-  Post,
   Body,
+  ClassSerializerInterceptor,
+  Controller,
   Get,
+  Post,
   Req,
   UseGuards,
   UseInterceptors,
-  ClassSerializerInterceptor,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { RefreshTokenDto } from './dto/refresh-token.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
-import { UpdatePasswordDto } from './dto/update-password.dto';
-import { JwtAuthGuard } from './guards/jwt.guard';
+
+import { UpdatePasswordDto } from '../dto/update-password.dto';
+import { JwtAuthGuard } from '../guards/jwt.guard';
+import { AuthService } from 'src/modules/auth/services/auth.service';
+import { LoginDto } from 'src/modules/auth/dto/login.dto';
+import { RefreshTokenDto } from 'src/modules/auth/dto/refresh-token.dto';
+import {
+  CheckTokenResetPasswordDto,
+  ResetPasswordDto,
+} from 'src/modules/auth/dto/reset-password.dto';
 
 @Controller('auth')
 @ApiTags('Auth')
@@ -48,6 +52,17 @@ export class AuthController {
   })
   resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.sendResetPasswordEmail(resetPasswordDto);
+  }
+
+  @Post('/check-token-reset-password')
+  @ApiOperation({
+    summary: 'Check Token Reset Password',
+    description: 'Check Token Reset Password from Email is valid or not',
+  })
+  checkTokenResetPassword(
+    @Body() checkTokenResetPasswordDto: CheckTokenResetPasswordDto,
+  ) {
+    return this.authService.checkResetPasswordToken(checkTokenResetPasswordDto);
   }
 
   @Post('/update-password')

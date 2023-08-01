@@ -5,12 +5,13 @@ import {
   MinLength,
   Validate,
 } from 'class-validator';
-import { Role } from '../enums/role.enum';
-import { User } from 'src/modules/user/entities/user.entity';
 import { UniqueValidator } from 'src/common/decorators/validator/unique-validator.decorator';
 import { ExistValidator } from 'src/common/decorators/validator/exist-validator.decorator';
+import { User } from 'src/modules/user/entities/user.entity';
+import { Role } from 'src/modules/role/entities/role.entity';
+import { UserInterface } from 'src/modules/user/interfaces/user.interface';
 
-export class CreateUserDto {
+export class CreateUserDto implements UserInterface {
   @IsNotEmpty()
   name: User['name'];
 
@@ -26,6 +27,6 @@ export class CreateUserDto {
   avatar?: User['avatar'];
 
   @IsOptional()
-  @Validate(ExistValidator, [User, 'role'])
-  role?: Role;
+  @Validate(ExistValidator, [Role, 'id'])
+  roleId?: User['roleId'];
 }

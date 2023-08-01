@@ -3,10 +3,7 @@ import {
   ExecutionContext,
   SetMetadata,
 } from '@nestjs/common';
-import { Role } from 'src/modules/user/enums/role.enum';
-
-export const ROLE_KEY = 'role';
-export const RequiredRole = (role: Role) => SetMetadata(ROLE_KEY, role);
+import { PermissionEnum } from 'src/modules/role/enums/permission.enum';
 
 export const Auth = createParamDecorator(
   (data: unknown, ctx: ExecutionContext) => {
@@ -14,3 +11,7 @@ export const Auth = createParamDecorator(
     return request.user;
   },
 );
+
+export const PERMISSIONS_KEY = 'permissions';
+export const RequirePermissions = (...permissions: PermissionEnum[]) =>
+  SetMetadata(PERMISSIONS_KEY, permissions);
