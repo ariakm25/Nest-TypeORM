@@ -1,9 +1,12 @@
 import { MigrationInterface, QueryRunner } from 'typeorm';
 
-export class InitAuth1690863976735 implements MigrationInterface {
-  name = 'InitAuth1690863976735';
+export class InitAuth1690944237762 implements MigrationInterface {
+  name = 'InitAuth1690944237762';
 
   public async up(queryRunner: QueryRunner): Promise<void> {
+    await queryRunner.query(
+      `CREATE TYPE "public"."token_type_enum" AS ENUM('refresh-token', 'confirm-email', 'reset-password')`,
+    );
     await queryRunner.query(
       `CREATE TABLE "token" ("id" SERIAL NOT NULL, "token" character varying NOT NULL, "type" "public"."token_type_enum" NOT NULL, "expires" TIMESTAMP, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "userId" integer, CONSTRAINT "PK_82fae97f905930df5d62a702fc9" PRIMARY KEY ("id"))`,
     );
@@ -11,7 +14,13 @@ export class InitAuth1690863976735 implements MigrationInterface {
       `CREATE TABLE "user" ("id" SERIAL NOT NULL, "name" character varying(255) NOT NULL, "email" character varying(255) NOT NULL, "password" character varying(255) NOT NULL, "avatar" character varying(255), "roleId" integer, "createdAt" TIMESTAMP NOT NULL DEFAULT now(), "updatedAt" TIMESTAMP NOT NULL DEFAULT now(), CONSTRAINT "UQ_e12875dfb3b1d92d7d7c5377e22" UNIQUE ("email"), CONSTRAINT "PK_cace4a159ff9f2512dd42373760" PRIMARY KEY ("id"))`,
     );
     await queryRunner.query(
+      `CREATE TYPE "public"."role_status_enum" AS ENUM('ACTIVE', 'INACTIVE')`,
+    );
+    await queryRunner.query(
       `CREATE TABLE "role" ("id" SERIAL NOT NULL, "name" character varying(255) NOT NULL, "status" "public"."role_status_enum" NOT NULL DEFAULT 'ACTIVE', CONSTRAINT "UQ_ae4578dcaed5adff96595e61660" UNIQUE ("name"), CONSTRAINT "PK_b36bcfe02fc8de3c57a8b2391c2" PRIMARY KEY ("id"))`,
+    );
+    await queryRunner.query(
+      `CREATE TYPE "public"."permission_status_enum" AS ENUM('ACTIVE', 'INACTIVE')`,
     );
     await queryRunner.query(
       `CREATE TABLE "permission" ("id" SERIAL NOT NULL, "name" character varying(255) NOT NULL, "status" "public"."permission_status_enum" NOT NULL DEFAULT 'ACTIVE', CONSTRAINT "UQ_240853a0c3353c25fb12434ad33" UNIQUE ("name"), CONSTRAINT "PK_3b8b97af9d9d8807e41e6f48362" PRIMARY KEY ("id"))`,
@@ -66,8 +75,11 @@ export class InitAuth1690863976735 implements MigrationInterface {
       `DROP INDEX "public"."IDX_240853a0c3353c25fb12434ad3"`,
     );
     await queryRunner.query(`DROP TABLE "permission"`);
+    await queryRunner.query(`DROP TYPE "public"."permission_status_enum"`);
     await queryRunner.query(`DROP TABLE "role"`);
+    await queryRunner.query(`DROP TYPE "public"."role_status_enum"`);
     await queryRunner.query(`DROP TABLE "user"`);
     await queryRunner.query(`DROP TABLE "token"`);
+    await queryRunner.query(`DROP TYPE "public"."token_type_enum"`);
   }
 }
